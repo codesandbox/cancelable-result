@@ -1,6 +1,6 @@
 {
   "name": "cancelable-result",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A tiny utility for cancelable results",
   "author": "Christian Alfoni <christianalfoni@gmail.com>",
   "license": "MIT",

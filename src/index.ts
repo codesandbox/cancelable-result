@@ -12,7 +12,7 @@ export type Result<V, E extends string> = Ok<V> | Err<E>;
 
 const CANCELLED_ERROR = "CANCELLED" as const;
 
-function Ok<V>(value: V): Ok<V> {
+export function Ok<V>(value: V): Ok<V> {
   return {
     ok: true,
     value,
