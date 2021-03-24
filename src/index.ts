@@ -5,10 +5,13 @@ export type Ok<V> = {
 
 type Err<E extends string> = {
   ok: false;
-  error: E;
+  error: E | "CANCELLED";
 };
 
-export type Result<V, E extends string> = Ok<V> | Err<E>;
+export type Result<V, E extends string> = {
+  promise: Promise<Ok<V> | Err<E>>;
+  cancel: () => void;
+};
 
 const CANCELLED_ERROR = "CANCELLED" as const;
 
@@ -27,11 +30,8 @@ export function Err<E extends string>(error: E): Err<E> {
 }
 
 export function Result<V, E extends string>(
-  promise: Promise<Result<V, E | "CANCELLED">>
-): {
-  promise: Promise<Result<V, E | "CANCELLED">>;
-  cancel: () => void;
-} {
+  promise: Promise<Ok<V> | Err<E>>
+): Result<V, E> {
   let isCancelled = false;
 
   return {
