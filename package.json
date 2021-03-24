@@ -1,6 +1,6 @@
 {
   "name": "cancelable-result",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A tiny utility for cancelable results",
   "author": "Christian Alfoni <christianalfoni@gmail.com>",
   "license": "MIT",
@@ -9,7 +9,8 @@
   "main": "cjs/index.js",
   "types": "index.d.ts",
   "scripts": {
-    "build": "tsc --outDir . --module es2015 && tsc --outDir cjs --module commonjs"
+    "build": "tsc --outDir . --module es2015 && tsc --outDir cjs --module commonjs",
+    "prepublish": "yarn build"
   },
   "keywords": [
     "typescript",
