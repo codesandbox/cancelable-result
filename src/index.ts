@@ -18,14 +18,14 @@ const CANCELLED_ERROR = "CANCELLED" as const;
 export function Ok<V>(value: V): Ok<V> {
   return {
     ok: true,
-    value,
+    value
   };
 }
 
 export function Err<E extends string>(error: E): Err<E> {
   return {
     ok: false,
-    error,
+    error
   };
 }
 
@@ -35,33 +35,34 @@ export function Result<V, E extends string>(
   let isCancelled = false;
 
   return {
-    promise: new Promise((resolve) => {
+    promise: new Promise((resolve, reject) => {
       promise
-        .then((result) => {
+        .then(result =>
+          resolve(
+            isCancelled
+              ? {
+                  ok: false,
+                  error: CANCELLED_ERROR
+                }
+              : result
+          )
+        )
+        .catch(error => {
           if (!isCancelled) {
-            return result;
+            // If the promise passed in throws an error reject our promise, which
+            // will lead to an unhandled promise exception... but, you should already
+            // have catched this in your result implementation to give specific errors
+            reject(error);
           }
 
           resolve({
             ok: false,
-            error: CANCELLED_ERROR,
-          });
-        })
-        .catch((error) => {
-          if (!isCancelled) {
-            // This error is considered critical and will throw
-            // as normal, like syntax errors etc.
-            throw error;
-          }
-
-          resolve({
-            ok: false,
-            error: CANCELLED_ERROR,
+            error: CANCELLED_ERROR
           });
         });
     }),
     cancel: () => {
       isCancelled = true;
-    },
+    }
   };
 }
