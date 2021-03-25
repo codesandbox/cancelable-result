@@ -1,14 +1,23 @@
+export type ErrorValue = {
+  type: string;
+  data?: any;
+};
+
 export type Ok<V> = {
   ok: true;
   value: V;
 };
 
-type Err<E extends string> = {
+type Err<E extends ErrorValue> = {
   ok: false;
-  error: E | "CANCELLED";
+  error:
+    | E
+    | {
+        type: "CANCELLED";
+      };
 };
 
-export type Result<V, E extends string> = {
+export type Result<V, E extends ErrorValue> = {
   promise: Promise<Ok<V> | Err<E>>;
   cancel: () => void;
 };
@@ -22,14 +31,25 @@ export function Ok<V>(value: V): Ok<V> {
   };
 }
 
-export function Err<E extends string>(error: E): Err<E> {
+export function Err<E extends string>(type: E): Err<{ type: E }>;
+export function Err<E extends string, D extends any>(
+  type: E,
+  data: D
+): Err<{ type: E; data: D }>;
+export function Err<E extends string, D extends any>(
+  type: E,
+  data?: D
+): Err<{ type: E; data?: D }> {
   return {
     ok: false,
-    error
+    error: {
+      type,
+      data
+    }
   };
 }
 
-export function Result<V, E extends string>(
+export function Result<V, E extends ErrorValue>(
   promise: Promise<Ok<V> | Err<E>>
 ): Result<V, E> {
   let isCancelled = false;
@@ -42,7 +62,9 @@ export function Result<V, E extends string>(
             isCancelled
               ? {
                   ok: false,
-                  error: CANCELLED_ERROR
+                  error: {
+                    type: CANCELLED_ERROR
+                  }
                 }
               : result
           )
@@ -57,7 +79,9 @@ export function Result<V, E extends string>(
 
           resolve({
             ok: false,
-            error: CANCELLED_ERROR
+            error: {
+              type: CANCELLED_ERROR
+            }
           });
         });
     }),

@@ -17,11 +17,11 @@ describe("cancelable-result", () => {
   test("should cancel a result", done => {
     expect.assertions(1);
 
-    const { cancel, promise } = Result(Promise.resolve(Err("foo")));
+    const { cancel, promise } = Result(Promise.resolve(Err("foo", 123)));
 
     promise.then(result => {
       if (result.ok === false) {
-        expect(result.error).toBe("CANCELLED");
+        expect(result.error.type).toBe("CANCELLED");
       }
       done();
     });
