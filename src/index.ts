@@ -1,3 +1,14 @@
+export type Match<V, E extends ErrorValue> = (
+  ok: (value: V) => void,
+  err:
+    | {
+        [T in E["type"]]?: (error: E extends { type: T } ? E : never) => void;
+      }
+    | {
+        CANCELLED: (error: { type: "CANCELLED" }) => void;
+      }
+) => void;
+
 export type ErrorValue = {
   type: string;
   data?: any;
@@ -18,7 +29,7 @@ type Err<E extends ErrorValue> = {
 };
 
 export type Result<V, E extends ErrorValue> = {
-  promise: Promise<Ok<V> | Err<E>>;
+  promise: Promise<(Ok<V> | Err<E>) & { match: Match<V, E> }>;
   cancel: () => void;
 };
 
@@ -27,7 +38,7 @@ const CANCELLED_ERROR = "CANCELLED" as const;
 export function Ok<V>(value: V): Ok<V> {
   return {
     ok: true,
-    value
+    value,
   };
 }
 
@@ -44,8 +55,8 @@ export function Err<E extends string, D extends any>(
     ok: false,
     error: {
       type,
-      data
-    }
+      data,
+    },
   };
 }
 
@@ -54,22 +65,42 @@ export function Result<V, E extends ErrorValue>(
 ): Result<V, E> {
   let isCancelled = false;
 
+  const withMatch = (
+    result: Ok<V> | Err<E>
+  ): (Ok<V> | Err<E>) & { match: Match<V, E> } => {
+    return Object.assign(result, {
+      match: ((ok, errors) => {
+        if (result.ok) {
+          ok(result.value);
+        } else {
+          const errorType = result.error.type;
+          // @ts-ignore
+          const err = errors[errorType];
+
+          err && err(result.error);
+        }
+      }) as Match<V, E>,
+    });
+  };
+
   return {
     promise: new Promise((resolve, reject) => {
       promise
-        .then(result =>
+        .then((result) =>
           resolve(
-            isCancelled
-              ? {
-                  ok: false,
-                  error: {
-                    type: CANCELLED_ERROR
+            withMatch(
+              isCancelled
+                ? {
+                    ok: false,
+                    error: {
+                      type: CANCELLED_ERROR,
+                    },
                   }
-                }
-              : result
+                : result
+            )
           )
         )
-        .catch(error => {
+        .catch((error) => {
           if (!isCancelled) {
             // If the promise passed in throws an error reject our promise, which
             // will lead to an unhandled promise exception... but, you should already
@@ -77,16 +108,18 @@ export function Result<V, E extends ErrorValue>(
             reject(error);
           }
 
-          resolve({
-            ok: false,
-            error: {
-              type: CANCELLED_ERROR
-            }
-          });
+          resolve(
+            withMatch({
+              ok: false,
+              error: {
+                type: CANCELLED_ERROR,
+              },
+            })
+          );
         });
     }),
     cancel: () => {
       isCancelled = true;
-    }
+    },
   };
 }
