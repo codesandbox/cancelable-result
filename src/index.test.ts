@@ -19,12 +19,12 @@ describe("cancelable-result", () => {
 
     const { cancel, promise } = Result(Promise.resolve(Err("foo", 123)));
 
+    const cb = jest.fn();
     promise.then((result) => {
       result.match(() => {}, {
-        CANCELLED: (error) => {
-          expect(error.type).toBe("CANCELLED");
-        },
+        CANCELLED: cb,
       });
+      expect(cb.mock.calls.length).toBe(1);
       done();
     });
 
