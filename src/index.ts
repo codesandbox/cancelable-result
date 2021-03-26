@@ -1,14 +1,12 @@
 export type Match<V, E extends ErrorValue> = (
   ok: (value: V) => void,
-  err:
-    | {
-        [T in E["type"]]?: (
-          error: E extends { type: T } ? E["data"] : never
-        ) => void;
-      }
-    | {
-        CANCELLED?: () => void;
-      }
+  err: {
+    [T in E["type"]]: (
+      error: E extends { type: T } ? E["data"] : never
+    ) => void;
+  } & {
+    CANCELLED?: () => void;
+  }
 ) => void;
 
 export type ErrorValue = {

@@ -22,6 +22,7 @@ describe("cancelable-result", () => {
     const cb = jest.fn();
     promise.then((result) => {
       result.match(() => {}, {
+        foo: () => {},
         CANCELLED: cb,
       });
       expect(cb.mock.calls.length).toBe(1);
